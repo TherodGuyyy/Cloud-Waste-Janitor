@@ -1,0 +1,94 @@
+{
+  "description": "A startup account with forgotten resources. Expected total: 178.41 USD per month across 8 findings.",
+  "now": "2026-10-28T12:00:00.000Z",
+  "resources": [
+    {
+      "id": "vol-orphan-gp3-500",
+      "type": "ebs_volume",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": { "Name": "old-database-disk" },
+      "state": "available",
+      "sizeGb": 500,
+      "volumeType": "gp3"
+    },
+    {
+      "id": "vol-orphan-gp2-200",
+      "type": "ebs_volume",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": {},
+      "state": "available",
+      "sizeGb": 200,
+      "volumeType": "gp2"
+    },
+    {
+      "id": "i-idle-web",
+      "type": "ec2_instance",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": { "Name": "staging-web" },
+      "state": "running",
+      "instanceType": "t3.medium",
+      "metrics": { "windowDays": 14, "avgCpuPercent": 2.1, "avgNetworkBytesPerDay": 1200000 }
+    },
+    {
+      "id": "i-idle-batch",
+      "type": "ec2_instance",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": { "Name": "forgotten-batch-worker" },
+      "state": "running",
+      "instanceType": "t3.large",
+      "metrics": { "windowDays": 14, "avgCpuPercent": 3.4, "avgNetworkBytesPerDay": 800000 }
+    },
+    {
+      "id": "snap-old-1",
+      "type": "ebs_snapshot",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": {},
+      "sizeGb": 300,
+      "startTime": "2026-03-01T00:00:00.000Z",
+      "usedByImage": false
+    },
+    {
+      "id": "snap-old-2",
+      "type": "ebs_snapshot",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": {},
+      "sizeGb": 100,
+      "startTime": "2026-06-01T00:00:00.000Z",
+      "usedByImage": false
+    },
+    {
+      "id": "eipalloc-unused-1",
+      "type": "elastic_ip",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": {},
+      "publicIp": "203.0.113.10",
+      "associated": false
+    },
+    {
+      "id": "eipalloc-unused-2",
+      "type": "elastic_ip",
+      "region": "us-east-1",
+      "accountId": "111111111111",
+      "tags": {},
+      "publicIp": "203.0.113.11",
+      "associated": false
+    }
+  ],
+  "history": {
+    "vol-orphan-gp3-500": [
+      { "observedAt": "2026-09-10T12:00:00.000Z", "state": "available" },
+      { "observedAt": "2026-10-27T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-orphan-gp2-200": [
+      { "observedAt": "2026-10-04T12:00:00.000Z", "state": "available" },
+      { "observedAt": "2026-10-27T12:00:00.000Z", "state": "available" }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "description": "A tidy account. Expected: zero findings, total 0.",
+  "now": "2026-10-28T12:00:00.000Z",
+  "resources": [
+    {
+      "id": "vol-attached-100",
+      "type": "ebs_volume",
+      "region": "us-east-1",
+      "accountId": "222222222222",
+      "tags": {},
+      "state": "in-use",
+      "sizeGb": 100,
+      "volumeType": "gp3"
+    },
+    {
+      "id": "i-busy-api",
+      "type": "ec2_instance",
+      "region": "us-east-1",
+      "accountId": "222222222222",
+      "tags": {},
+      "state": "running",
+      "instanceType": "t3.small",
+      "metrics": { "windowDays": 14, "avgCpuPercent": 35, "avgNetworkBytesPerDay": 900000000 }
+    },
+    {
+      "id": "snap-recent",
+      "type": "ebs_snapshot",
+      "region": "us-east-1",
+      "accountId": "222222222222",
+      "tags": {},
+      "sizeGb": 100,
+      "startTime": "2026-10-18T12:00:00.000Z",
+      "usedByImage": false
+    },
+    {
+      "id": "snap-old-but-used",
+      "type": "ebs_snapshot",
+      "region": "us-east-1",
+      "accountId": "222222222222",
+      "tags": {},
+      "sizeGb": 200,
+      "startTime": "2026-04-01T00:00:00.000Z",
+      "usedByImage": true
+    },
+    {
+      "id": "eipalloc-in-use",
+      "type": "elastic_ip",
+      "region": "us-east-1",
+      "accountId": "222222222222",
+      "tags": {},
+      "publicIp": "203.0.113.20",
+      "associated": true
+    }
+  ],
+  "history": {
+    "vol-attached-100": [
+      { "observedAt": "2026-10-01T12:00:00.000Z", "state": "in-use" },
+      { "observedAt": "2026-10-27T12:00:00.000Z", "state": "in-use" }
+    ]
+  }
+}

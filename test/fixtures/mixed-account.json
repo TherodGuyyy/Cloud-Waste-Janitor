@@ -1,0 +1,56 @@
+{
+  "description": "Edge cases: exact thresholds, missing data, ignore tags, unknown prices, malformed input. Expected: 5 findings, total 9.00, 3 unestimated, 3 insufficient data, 2 ignored, 3 invalid, 22 received, 17 evaluated.",
+  "now": "2026-10-28T12:00:00.000Z",
+  "resources": [
+    { "id": "vol-boundary-13", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+    { "id": "vol-boundary-14", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+    { "id": "vol-fresh", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+    { "id": "vol-reattached", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+    { "id": "vol-ignored", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": { "janitor:ignore": "true" }, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+    { "id": "vol-unknown-type", "type": "ebs_volume", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 50, "volumeType": "standard" },
+    { "id": "vol-eu", "type": "ebs_volume", "region": "eu-west-1", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 100, "volumeType": "gp3" },
+
+    { "id": "i-nometrics", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "running", "instanceType": "t3.micro", "metrics": null },
+    { "id": "i-shortwindow", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "running", "instanceType": "t3.micro", "metrics": { "windowDays": 7, "avgCpuPercent": 1, "avgNetworkBytesPerDay": 100 } },
+    { "id": "i-busy-cpu", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "running", "instanceType": "t3.micro", "metrics": { "windowDays": 14, "avgCpuPercent": 6, "avgNetworkBytesPerDay": 100 } },
+    { "id": "i-cpu-low-net-high", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "running", "instanceType": "t3.micro", "metrics": { "windowDays": 14, "avgCpuPercent": 2, "avgNetworkBytesPerDay": 50000000 } },
+    { "id": "i-stopped", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "stopped", "instanceType": "t3.micro", "metrics": null },
+    { "id": "i-unknown-type", "type": "ec2_instance", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "state": "running", "instanceType": "t3.xlarge", "metrics": { "windowDays": 14, "avgCpuPercent": 1, "avgNetworkBytesPerDay": 100 } },
+
+    { "id": "snap-89", "type": "ebs_snapshot", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "sizeGb": 20, "startTime": "2026-07-31T12:00:00.000Z", "usedByImage": false },
+    { "id": "snap-91", "type": "ebs_snapshot", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "sizeGb": 20, "startTime": "2026-07-29T12:00:00.000Z", "usedByImage": false },
+    { "id": "snap-invalid-date", "type": "ebs_snapshot", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "sizeGb": 20, "startTime": "not-a-date", "usedByImage": false },
+    { "id": "snap-used-by-image", "type": "ebs_snapshot", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "sizeGb": 20, "startTime": "2026-01-01T00:00:00.000Z", "usedByImage": true },
+
+    { "id": "eip-associated", "type": "elastic_ip", "region": "us-east-1", "accountId": "333333333333", "tags": {}, "publicIp": "203.0.113.30", "associated": true },
+    { "id": "eip-ignored", "type": "elastic_ip", "region": "us-east-1", "accountId": "333333333333", "tags": { "janitor:ignore": "TRUE" }, "publicIp": "203.0.113.31", "associated": false },
+
+    { "id": "broken-1", "type": "ebs_volume", "accountId": "333333333333", "tags": {}, "state": "available", "sizeGb": 10, "volumeType": "gp3" },
+    null,
+    { "id": "weird", "type": "toaster", "region": "us-east-1", "accountId": "333333333333", "tags": {} }
+  ],
+  "history": {
+    "vol-boundary-13": [
+      { "observedAt": "2026-10-15T12:00:00.000Z", "state": "available" },
+      { "observedAt": "2026-10-27T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-boundary-14": [
+      { "observedAt": "2026-10-14T12:00:00.000Z", "state": "available" },
+      { "observedAt": "2026-10-27T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-reattached": [
+      { "observedAt": "2026-10-01T12:00:00.000Z", "state": "available" },
+      { "observedAt": "2026-10-10T12:00:00.000Z", "state": "in-use" },
+      { "observedAt": "2026-10-26T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-ignored": [
+      { "observedAt": "2026-08-29T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-unknown-type": [
+      { "observedAt": "2026-09-28T12:00:00.000Z", "state": "available" }
+    ],
+    "vol-eu": [
+      { "observedAt": "2026-09-28T12:00:00.000Z", "state": "available" }
+    ]
+  }
+}

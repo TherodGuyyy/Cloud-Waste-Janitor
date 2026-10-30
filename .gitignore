@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+# Secrets belong in environment variables only. Ignored here as a safety net.
+.env
+.env.*
+*.sqlite
+*.db
