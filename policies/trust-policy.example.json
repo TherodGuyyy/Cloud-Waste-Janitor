@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowJanitorToAssumeThisRole",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::REPLACE_WITH_JANITOR_ACCOUNT_ID:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "REPLACE_WITH_A_UNIQUE_EXTERNAL_ID"
+        }
+      }
+    }
+  ]
+}

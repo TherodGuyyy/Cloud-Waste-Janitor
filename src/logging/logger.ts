@@ -15,7 +15,8 @@ const LEVEL_RANK: Record<LogLevel, number> = { DEBUG: 10, INFO: 20, WARN: 30, ER
 
 export const REDACTED = '[REDACTED]';
 
-const SENSITIVE_KEY = /token|secret|password|passwd|authorization|api[_-]?key|credential|signature|session[_-]?key/i;
+const SENSITIVE_KEY =
+  /token|secret|password|passwd|authorization|api[_-]?key|credential|signature|session[_-]?key|external[_-]?id/i;
 
 /** Values that look like secrets even when the key name is innocent. */
 const SENSITIVE_VALUE_PATTERNS: RegExp[] = [

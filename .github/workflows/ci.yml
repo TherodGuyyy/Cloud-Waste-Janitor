@@ -11,6 +11,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Fake credentials: the integration tests only ever talk to the fake AWS (moto) on this machine.
+      AWS_ACCESS_KEY_ID: testing
+      AWS_SECRET_ACCESS_KEY: testing
+      MOTO_ENDPOINT: http://127.0.0.1:5555
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -27,11 +33,40 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
-      - name: Run tests with coverage
+      - name: Run unit tests with coverage
         run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+      - name: Set up Python (for the fake AWS server)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the fake AWS server (moto, exact version)
+        run: pip install "moto[server]==5.2.5"
+
+      - name: Start the fake AWS server
+        run: |
+          moto_server -p 5555 > moto.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail "$MOTO_ENDPOINT/moto-api/" > /dev/null; then
+              echo "Fake AWS is ready after $attempt attempt(s)"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The fake AWS server did not start within 30 seconds. Its log:"
+          cat moto.log
+          exit 1
+
+      - name: Run integration tests (real AWS SDK against the fake AWS)
+        run: npm run test:integration
+
+      - name: Show the fake AWS log if anything failed
+        if: failure()
+        run: cat moto.log || true
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
