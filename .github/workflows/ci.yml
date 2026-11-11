@@ -19,7 +19,7 @@ jobs:
       MOTO_ENDPOINT: http://127.0.0.1:5555
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
