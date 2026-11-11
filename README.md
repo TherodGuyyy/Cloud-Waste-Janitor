@@ -2,7 +2,7 @@
 
 Finds forgotten, costly cloud resources, tells your team in Slack what each one costs per month, and only acts after a human approves.
 
-> Status: **Phase 2 complete (collectors).** The Janitor can now read an AWS account (read-only), turn what it finds into resources, and judge them with the Phase 1 rules. This is proven against a fake AWS server (moto) and with fakes in unit tests; it has not been pointed at a real account yet. Next up is a command-line report (Phase 3). Design documents: `01-design-doc.md`, `02-threat-model.md`, `03-test-plan.md`, `04-phase-2-design.md`.
+> Status: **Phase 3 complete (command-line report).** One command scans an AWS account (read-only), remembers what it saw, judges it with the rules and prints a report with the total monthly savings. Proven against a fake AWS server (moto) and with fakes in unit tests; not yet pointed at a real account. Next up is Slack alerts (Phase 4). Design documents: `01-design-doc.md`, `02-threat-model.md`, `03-test-plan.md`, `04-phase-2-design.md`, `05-phase-3-design.md`.
 
 ## The problem in plain words
 
@@ -19,6 +19,7 @@ flowchart LR
     end
 
     subgraph Janitor["Cloud Waste Janitor"]
+        CLI["Command-line report (Phase 3)"]
         SCH["Scheduler"]
         COL["Collectors (one per cloud service)"]
         RUL["Rules engine (pure logic)"]
@@ -34,6 +35,7 @@ flowchart LR
     SLACK["Slack channel: Approve / Snooze / Ignore"]
     HUMAN(("Team member"))
 
+    CLI --> SVC
     SCH --> COL
     COL -->|read-only calls| AWS
     COL --> SVC
@@ -54,17 +56,24 @@ flowchart LR
 
 **How to read it:** the Scheduler wakes up on a timer. Collectors look at the cloud account (read-only). The Findings service asks the Rules engine "is this wasteful?" and the Cost estimator "how much per month?", saves the result, and tells the team in Slack. A person clicks a button. Slack sends a signed message to our Webhook, and only then can the Action executor do anything, and in version 1 it can only quarantine, never delete.
 
-**Built so far (Phases 1 and 2):** Rules engine, Cost estimator, the evaluator part of the Findings service, the finding life-cycle rules, and the Collectors with their read-only AWS access, retries and error handling. Everything else in the diagram arrives in later phases.
+**Built so far (Phases 1 to 3):** Rules engine, Cost estimator, the evaluator part of the Findings service, the finding life-cycle rules, the Collectors with their read-only AWS access, retries and error handling, and the command-line report with its history file. Everything else in the diagram arrives in later phases.
 
 **Inside the Collectors box (Phase 2):** the layers only point one way, and tests enforce it.
 
 ```mermaid
 flowchart TD
-    APP["app/ : collectAccount (wires everything, loops over regions)"]
+    CLIM["cli/ : arguments, settings, exit codes (main.ts is the only file touching the real process)"]
+    APP["app/ : runScan and collectAccount (wire everything, loop over regions)"]
+    REP["report/ : pure text and JSON writers"]
+    STO["storage/ : history file (the only code touching the disk)"]
     COL["collectors/ : volumes, servers, snapshots, IPs (use ports, never the SDK)"]
     ADP["adapters/aws/ : the ONLY code that touches the AWS SDK (read commands only)"]
     RES["resilience/ : retry with exponential backoff and jitter"]
     COR["core/ : rules, costs, state machine (knows nothing about AWS)"]
+    CLIM --> APP
+    CLIM --> STO
+    APP --> REP
+    APP --> STO
     APP --> COL
     APP --> ADP
     ADP --> COL
@@ -84,6 +93,47 @@ Given a list of cloud resources and a history of what the Janitor has seen befor
 | Unused IP | Elastic IP address attached to nothing | immediately |
 
 Each finding comes with a reason, the evidence, and an **estimated** monthly cost. The report totals the money at stake. Things it cannot judge (missing metrics, unreadable dates) are listed separately instead of guessed. Anything tagged `janitor:ignore=true` is left alone.
+
+## Try it: the command-line report (Phase 3)
+
+```
+npm ci
+npm run build
+node dist/cli/main.js scan
+```
+
+(AWS credentials come from `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in your environment.) An example report:
+
+```
+CLOUD WASTE JANITOR REPORT
+==========================
+Account:    123456789012
+Regions:    us-east-1 (1 of 1 scanned)
+Checked:    2 resources
+
+POTENTIAL SAVINGS
+  $3.65 per month  (about $43.80 per year)
+
+FINDINGS (1)
+
+1. $3.65/month  Unused IP address: eipalloc-0abc... (IP address, us-east-1)
+   Why:  Elastic IP address is not attached to anything
+   Cost: $0.005/hour x 730 hours
+
+DISKS BEING WATCHED (1)
+  - vol-0def... (us-east-1): unattached for 0 of 14 days
+```
+
+| Option | Meaning |
+|--------|---------|
+| `--format json` | Machine-readable report for scripts (the report goes to stdout, log lines to stderr) |
+| `--history-file <path>` | Where the Janitor remembers what it saw (default `.janitor/history.json`) |
+| `--no-history` | Do not read or write a history file (disks then cannot be judged by age) |
+| `--help`, `--version` | Help and version |
+
+**Why a history file?** AWS does not say how long a disk has been unattached, so the Janitor writes down what it sees on every run. A disk first seen today shows as "watched" and is flagged once it has been unattached for 14 days. The file is saved safely (never half-written), kept small, and a damaged file stops the run instead of being overwritten.
+
+**Exit codes:** `0` done, `1` unexpected error, `2` bad usage or settings, `3` scan incomplete (a report is still printed, with a warning), `4` history file problem.
 
 ## Reading an AWS account (Phase 2)
 
@@ -119,7 +169,10 @@ How it stays safe and honest:
 
 ```
 src/
-  app/           collectAccount: wires config, clients, collectors and regions together
+  cli/           command-line front door: arguments, settings, exit codes
+  report/        pure text and JSON report writers
+  storage/       the history file (the only code that touches the disk)
+  app/           runScan and collectAccount: wire config, clients, collectors and regions together
   collectors/    one collector per resource type, plus the runner (talk to "ports", never the SDK)
   adapters/aws/  the only code that uses the AWS SDK: clients, readers, error classification
   resilience/    retry with exponential backoff and jitter (knows nothing about AWS)
@@ -136,7 +189,8 @@ src/
 policies/        read-only access policy and an example trust policy for customers
 test/
   unit/          one test file per module, plus architecture and policy checks
-  integration/   the real AWS SDK against moto (fake AWS)
+  integration/   the real AWS SDK and the real CLI against moto (fake AWS)
+scripts/smoke.js runs the compiled program as a real process against moto
   fixtures/      sample accounts (clean, wasteful, mixed)
 .github/workflows/ci.yml   runs the checks on every pull request
 ```
@@ -166,6 +220,7 @@ npm run typecheck   # check the types
 npm test            # run the tests
 npm run test:coverage
 npm run build
+npm run test:smoke   # needs moto, see below
 ```
 
 AWS credentials are read from the standard environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), never from files in this project.
@@ -190,6 +245,8 @@ On Windows PowerShell:
 $env:AWS_ACCESS_KEY_ID="testing"; $env:AWS_SECRET_ACCESS_KEY="testing"; $env:MOTO_ENDPOINT="http://127.0.0.1:5555"; npm run test:integration
 ```
 
+The smoke test (`npm run build` first, then `npm run test:smoke`) uses the same variables.
+
 GitHub runs the unit tests, the integration tests and the build automatically on every pull request and every push to `main` (see the green tick or red cross next to a commit).
 
 ## Design notes for Phase 1
@@ -205,6 +262,13 @@ GitHub runs the unit tests, the integration tests and the build automatically on
 - **The SDK does not retry on its own** (`maxAttempts: 1`). Only our retry layer retries, so every attempt is logged and counted.
 - **Not yet tried on a real account.** Everything is verified against the fake AWS. A first run on a real, low-risk account should be done with the read-only policy and watched.
 
+## Design notes for Phase 3
+
+- **Report on stdout, logs on stderr**, so `node dist/cli/main.js scan --format json > report.json` gives a clean file.
+- **A scan that could not see everything never looks like "all clear".** The report carries a loud banner and the exit code is 3.
+- **No new dependencies.** The argument parser is about 80 lines; fewer packages means fewer things to go stale.
+- **Still read-only.** Nothing in this phase can change a cloud account.
+
 ## Roadmap
 
 | Phase | Deliverable | Status |
@@ -212,8 +276,8 @@ GitHub runs the unit tests, the integration tests and the build automatically on
 | 0 | Design doc, architecture diagram, threat model, test plan | Done |
 | 1 | Rules engine with sample data and tests | Done |
 | 2 | Collectors tested against moto (fake AWS) | Done |
-| 3 | Command-line report with total monthly savings (first demo) | Next |
-| 4 | Slack alerts | |
+| 3 | Command-line report with total monthly savings (first demo) | Done |
+| 4 | Slack alerts | Next |
 | 5 | Approvals and safe actions | |
 | 6 | Dashboard (optional web view) | |
 | 7 | README polish, demo video, launch | |

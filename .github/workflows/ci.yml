@@ -64,6 +64,9 @@ jobs:
       - name: Run integration tests (real AWS SDK against the fake AWS)
         run: npm run test:integration
 
+      - name: Smoke test the compiled program (a real process against the fake AWS)
+        run: npm run test:smoke
+
       - name: Show the fake AWS log if anything failed
         if: failure()
         run: cat moto.log || true

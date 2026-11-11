@@ -1,6 +1,6 @@
 {
   "name": "cloud-waste-janitor",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Finds forgotten, costly cloud resources and asks a human before acting.",
   "private": true,
   "license": "MIT",
@@ -12,7 +12,9 @@
     "build": "tsc -p tsconfig.build.json",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:integration": "jest --config jest.integration.config.js --runInBand"
+    "test:integration": "jest --config jest.integration.config.js --runInBand",
+    "scan": "node dist/cli/main.js scan",
+    "test:smoke": "node scripts/smoke.js"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -26,5 +28,8 @@
     "@aws-sdk/client-ec2": "3.1161.0",
     "@aws-sdk/client-sts": "3.1161.0",
     "@aws-sdk/credential-providers": "3.1161.0"
+  },
+  "bin": {
+    "cloud-waste-janitor": "dist/cli/main.js"
   }
 }

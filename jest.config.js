@@ -13,7 +13,8 @@ module.exports = {
   // out of the coverage figures and the 90% rule could never catch it.
   roots: ['<rootDir>/src', '<rootDir>/test/unit'],
   testMatch: ['**/*.test.ts'],
-  collectCoverageFrom: ['src/**/*.ts', '!src/index.ts'],
+  // main.ts only touches the real process; the compiled program is exercised by test:smoke.
+  collectCoverageFrom: ['src/**/*.ts', '!src/index.ts', '!src/cli/main.ts'],
   coverageDirectory: 'coverage',
   coverageThreshold: {
     global: {

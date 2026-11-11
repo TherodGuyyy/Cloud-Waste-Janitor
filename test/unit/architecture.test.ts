@@ -49,9 +49,28 @@ describe('layering', () => {
     for (const rel of importers) expect(rel.startsWith('adapters/')).toBe(true);
   });
 
-  it('nothing outside config reads environment variables', () => {
-    const readers = files.filter((f) => /process\.env/.test(f.text)).map((f) => f.rel);
-    expect(readers).toEqual([]);
+  it('only the front door (cli/main.ts) touches the real process: environment, output and exit code', () => {
+    const touching = files.filter((f) => /process\.(env|stdout|stderr|exit|argv)/.test(f.text)).map((f) => f.rel);
+    // logger.ts holds the default sink that writes log lines to stdout when none is injected.
+    expect(touching.sort()).toEqual(['cli/main.ts', 'logging/logger.ts']);
+  });
+
+  it('report code is pure: it imports no AWS, storage, app or CLI code', () => {
+    expect(offenders('report', /\.\.\/(adapters|app|storage|cli|resilience)\b/)).toEqual([]);
+  });
+
+  it('only the storage layer touches the disk', () => {
+    const diskUsers = files.filter((f) => /from\s+['"](fs|node:fs|fs\/promises)['"]/.test(f.text)).map((f) => f.rel);
+    expect(diskUsers).toEqual(['storage/fileSystem.ts']);
+  });
+
+  it('the app layer never imports the CLI, and core never imports storage or report', () => {
+    expect(offenders('app', /\.\.\/cli\b/)).toEqual([]);
+    expect(offenders('core', /\.\.\/(storage|report|cli)\b/)).toEqual([]);
+  });
+
+  it('storage depends only on core types and the logger', () => {
+    expect(offenders('storage', /\.\.\/(adapters|app|collectors|cli|report|config)\b/)).toEqual([]);
   });
 });
 

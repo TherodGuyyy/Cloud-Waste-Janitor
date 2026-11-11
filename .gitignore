@@ -8,3 +8,5 @@ coverage/
 .env.*
 *.sqlite
 *.db
+# The Janitor's own memory of what it has seen (may name your resources)
+.janitor/
