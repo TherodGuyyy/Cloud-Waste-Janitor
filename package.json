@@ -24,7 +24,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "3.1161.0",
+    "@aws-sdk/client-cloudwatch": "3.1165.0",
     "@aws-sdk/client-ec2": "3.1161.0",
     "@aws-sdk/client-sts": "3.1161.0",
     "@aws-sdk/credential-providers": "3.1161.0"
